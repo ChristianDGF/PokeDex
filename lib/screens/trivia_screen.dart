@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
 import '../services/pokemon_service.dart';
 import '../services/settings_service.dart';
 import '../utils/colors.dart';
@@ -60,59 +59,27 @@ class _TriviaScreenState extends State<TriviaScreen>
     _revealController.reset();
 
     try {
-      // Get 4 random Pokemon IDs (1-1025)
-      Set<int> randomIds = {};
-      while (randomIds.length < 4) {
-        randomIds.add(_random.nextInt(1025) + 1);
-      }
+      final pokemonService = PokemonService();
+      final pokemonList = await pokemonService.getRandomPokemonsForTrivia();
 
-      final idsString = randomIds.join(', ');
-      final query = '''
-        query GetRandomPokemons {
-          pokemon_v2_pokemon(where: {id: {_in: [$idsString]}, is_default: {_eq: true}}) {
-            id
-            name
-          }
-        }
-      ''';
-
-      final QueryOptions options = QueryOptions(
-        document: gql(query),
-        fetchPolicy: FetchPolicy.networkOnly,
-      );
-
-      final result = await PokemonService.client.value.query(options);
-
-      if (!result.hasException && result.data != null) {
-        final List<dynamic> pokemonList = result.data?['pokemon_v2_pokemon'] ?? [];
+      if (pokemonList.length >= 4) {
+        // Pick a random correct answer FIRST
+        final correctIndex = _random.nextInt(pokemonList.length);
+        final correct = pokemonList[correctIndex];
         
-        if (pokemonList.length >= 4) {
-          // Create list of options
-          final optionsList = List<Map<String, dynamic>>.from(
-            pokemonList.map((p) => {'id': p['id'], 'name': p['name']})
-          );
-
-          // Pick a random correct answer FIRST
-          final correctIndex = _random.nextInt(optionsList.length);
-          final correct = optionsList[correctIndex];
-          
-          // Then shuffle options for display
-          optionsList.shuffle(_random);
-          
-          setState(() {
-            _correctPokemonId = correct['id'];
-            _correctPokemonName = correct['name'];
-            _options = optionsList;
-            _isLoading = false;
-          });
-        } else {
-          // Retry if we didn't get enough Pokemon
-          _loadNewQuestion();
-        }
-      } else {
+        // Then shuffle options for display
+        final optionsList = List<Map<String, dynamic>>.from(pokemonList);
+        optionsList.shuffle(_random);
+        
         setState(() {
+          _correctPokemonId = correct['id'];
+          _correctPokemonName = correct['name'];
+          _options = optionsList;
           _isLoading = false;
         });
+      } else {
+        // Retry if we didn't get enough Pokemon
+        _loadNewQuestion();
       }
     } catch (e) {
       print('Error loading trivia: $e');

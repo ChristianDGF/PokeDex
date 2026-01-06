@@ -15,7 +15,7 @@ class MapLocation {
   final bool isCity;
   final String? apiLocationName; // Name to search in API
   final List<int> fallbackPokemonIds; // Fallback if API fails
-
+/// Constructor
   const MapLocation({
     required this.nameEn,
     required this.nameEs,
@@ -40,7 +40,7 @@ class RegionData {
   final double aspectRatio;
   final List<MapLocation> locations;
   final bool isLocal;
-
+// Constructor
   const RegionData({
     required this.nameEn,
     required this.nameEs,
@@ -108,7 +108,7 @@ class _MapScreenState extends State<MapScreen> {
       y: 0.67,
       color: Color(0xFFFFFFFF),
       apiLocationName: 'pallet-town',
-      fallbackPokemonIds: [16, 19, 21, 29, 32],
+      fallbackPokemonIds: [],
     ),
     MapLocation(
       nameEn: 'Viridian City',

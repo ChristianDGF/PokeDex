@@ -867,4 +867,48 @@ class PokemonService {
       return [];
     }
   }
+
+  /// Fetch random Pokemon for trivia game
+  Future<List<Map<String, dynamic>>> getRandomPokemonsForTrivia() async {
+    try {
+      // Get 4 random Pokemon IDs (1-1025)
+      final random = DateTime.now().millisecondsSinceEpoch;
+      Set<int> randomIds = {};
+      int seed = random;
+      while (randomIds.length < 4) {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        randomIds.add((seed % 1025) + 1);
+      }
+
+      final idsString = randomIds.join(', ');
+      final query = '''
+        query GetRandomPokemons {
+          pokemon_v2_pokemon(where: {id: {_in: [$idsString]}, is_default: {_eq: true}}) {
+            id
+            name
+          }
+        }
+      ''';
+
+      final QueryOptions options = QueryOptions(
+        document: gql(query),
+        fetchPolicy: FetchPolicy.networkOnly,
+      );
+
+      final QueryResult result = await client.value.query(options);
+
+      if (result.hasException) {
+        print('Error fetching trivia pokemons: ${result.exception}');
+        return [];
+      }
+
+      final List<dynamic> pokemonList = result.data?['pokemon_v2_pokemon'] ?? [];
+      return List<Map<String, dynamic>>.from(
+        pokemonList.map((p) => {'id': p['id'], 'name': p['name']})
+      );
+    } catch (e) {
+      print('Exception fetching trivia pokemons: $e');
+      return [];
+    }
+  }
 }

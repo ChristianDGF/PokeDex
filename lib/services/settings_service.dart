@@ -21,7 +21,7 @@ class SettingsService {
     'es': '🇪🇸',
   };
 
-  // Translations for UI
+  // traducciones para la UI
   static const Map<String, Map<String, String>> translations = {
     'en': {
       'settings': 'Settings',
